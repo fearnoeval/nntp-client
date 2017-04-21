@@ -91,6 +91,13 @@ is not an endoresement):
     480 authentication required
     205 goodbye
 
+## Caveat emptor
+
+This is a tl;dr. For more details, see [CAVEATS.md](CAVEATS.md)
+
+- Because of the ambiguity of response code 211, beware of sending LISTGROUP
+commands with `writeAndRead`
+
 ## License
 
 - © 2017 [Tim Walter](https://www.fearnoeval.com/)
