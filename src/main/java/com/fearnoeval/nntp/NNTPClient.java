@@ -18,11 +18,12 @@ import java.util.Set;
 public final class NNTPClient {
 
   /**
-   * Returns a single- or multi-line response from the socket as a byte array
-   * based on the response code received from the socket. If the response code
-   * is known to return a multi-line response, a multi-line response is
-   * returned. All other responses are returned as a single-line response.
-   * Officially supports all response codes defined in RFC 3977 and RFC 2980.
+   * Writes data to a socket and returns a single- or multi-line response from
+   * the socket as a byte array based on the response code received from the
+   * socket. If the response code is known to return a multi-line response, a
+   * multi-line response is returned. All other responses are returned as a
+   * single-line response. Officially supports all response codes defined in
+   * RFC 3977 and RFC 2980.
    *
    * @param  socket      the socket with an active connection to an NNTP server
    * @param  dataToWrite the data to write as bytes

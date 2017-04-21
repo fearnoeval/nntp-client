@@ -11,8 +11,9 @@ A small [Network News Transfer Protocol][rfc3977] client library for Java
 - `public static void write(final Socket socket, byte[] dataToWrite) throws IOException`
   - Writes data to a socket
 - `public static byte[] writeAndRead(final Socket socket, final byte[] dataToWrite) throws IOException`
-  - Returns a single- or multi-line response from the socket as a byte array
-  based on the response code received from the socket
+  - Writes data to a socket and returns a single- or multi-line response from
+  the socket as a byte array based on the response code received from the
+  socket
 
 ## FAQ
 
