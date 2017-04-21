@@ -21,6 +21,8 @@ A small [Network News Transfer Protocol][rfc3977] client library for Java
   - Writes `length` bytes from the passed byte array starting at `offset` to the
   socket and returns a single- or multi-line response from the socket as a byte
   array based on the response code received from the socket
+- `public static final Set<String> defaultMultiLineResponseCodes`
+  - Unmodifiable set of strings of the default multi-line response codes.
 
 ## FAQ
 

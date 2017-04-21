@@ -97,7 +97,10 @@ public final class NNTPClient {
 
   private NNTPClient() {}
 
-  private static final Set<String> defaultMultiLineResponseCodes;
+  /**
+   * Unmodifiable set of strings of the default multi-line response codes.
+   */
+  public static final Set<String> defaultMultiLineResponseCodes;
   static {
     final Set<String> s = new HashSet<>(10, 1.0f);
     s.add("100");
