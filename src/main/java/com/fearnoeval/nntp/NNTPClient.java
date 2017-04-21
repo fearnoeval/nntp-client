@@ -24,12 +24,12 @@ public final class NNTPClient {
    * returned. All other responses are returned as a single-line response.
    * Officially supports all response codes defined in RFC 3977 and RFC 2980.
    *
-   * @param  socket  the socket with an active connection to an NNTP server
-   * @param  command the command as bytes
-   * @return         the response from the server as bytes
+   * @param  socket      the socket with an active connection to an NNTP server
+   * @param  dataToWrite the data to write as bytes
+   * @return             the response from the server as bytes
    */
-  public static byte[] writeAndRead(final Socket socket, final byte[] command) throws IOException {
-    return writeAndRead(socket, command, defaultMultiLineResponseCodes);
+  public static byte[] writeAndRead(final Socket socket, final byte[] dataToWrite) throws IOException {
+    return writeAndRead(socket, dataToWrite, defaultMultiLineResponseCodes);
   }
 
   /**
@@ -53,13 +53,13 @@ public final class NNTPClient {
   }
 
   /**
-   * Writes a command to a socket.
+   * Writes data to a socket.
    *
-   * @param socket  the socket with an active connection to an NNTP server
-   * @param command the command as bytes
+   * @param socket      the socket with an active connection to an NNTP server
+   * @param dataToWrite the data to write as bytes
    */
-  public static void write(final Socket socket, final byte[] command) throws IOException {
-    socket.getOutputStream().write(command);
+  public static void write(final Socket socket, final byte[] dataToWrite) throws IOException {
+    socket.getOutputStream().write(dataToWrite);
   }
 
   private NNTPClient() {}
@@ -80,15 +80,15 @@ public final class NNTPClient {
     defaultMultiLineResponseCodes = Collections.unmodifiableSet(s);
   }
 
-  private static byte[] writeAndRead(final Socket socket, final byte[] command, final Set<String> multiLineResponseCodes) throws IOException {
-    write(socket, command);
+  private static byte[] writeAndRead(final Socket socket, final byte[] dataToWrite, final Set<String> multiLineResponseCodes) throws IOException {
+    write(socket, dataToWrite);
 
     final byte[] responseCode = new byte[3];
     socket.getInputStream().read(responseCode);
     final String responseCodeString = new String(responseCode, StandardCharsets.UTF_8);
 
     if (responseCodeString.equals(_211)) {
-      return read211(socket, command);
+      return read211(socket, dataToWrite);
     }
     if (multiLineResponseCodes.contains(responseCodeString)) {
       return readMultiLine(socket, responseCode);
@@ -100,12 +100,12 @@ public final class NNTPClient {
   private static final byte[] _211Array = _211.getBytes(StandardCharsets.UTF_8);
   private static final String listgroup = "LISTGROUP";
 
-  private static boolean isListgroup(final byte[] command) {
-    return (command.length >= listgroup.length()) && new String(command, 0, listgroup.length(), StandardCharsets.UTF_8).toUpperCase().equals(listgroup);
+  private static boolean isListgroup(final byte[] maybeCommand) {
+    return (maybeCommand.length >= listgroup.length()) && new String(maybeCommand, 0, listgroup.length(), StandardCharsets.UTF_8).toUpperCase().equals(listgroup);
   }
 
-  private static byte[] read211(final Socket socket, final byte[] command) throws IOException {
-    return (isListgroup(command)) ? readMultiLine(socket, _211Array) : readSingleLine(socket, _211Array);
+  private static byte[] read211(final Socket socket, final byte[] maybeCommand) throws IOException {
+    return (isListgroup(maybeCommand)) ? readMultiLine(socket, _211Array) : readSingleLine(socket, _211Array);
   }
 
   private static final int cr  = '\r';
