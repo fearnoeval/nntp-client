@@ -9,97 +9,34 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * A small NNTP client. Commands are sent as byte arrays and responses are
- * returned as byte arrays. Commands must be provided with their terminating
- * characters (CRLF). Responses are returned with their status code and all
- * terminating characters.
- */
 public final class NNTPClient {
 
-  /**
-   * Writes data to the socket and returns a single- or multi-line response from
-   * the socket as a byte array based on the response code received from the
-   * socket. If the response code is known to return a multi-line response, a
-   * multi-line response is returned. All other responses are returned as a
-   * single-line response. Officially supports all response codes defined in
-   * RFC 3977 and RFC 2980.
-   *
-   * @param  socket      the socket with an active connection to an NNTP server
-   * @param  dataToWrite the data to write as bytes
-   * @return             the response from the server as bytes
-   */
   public static byte[] writeAndRead(final Socket socket, final byte[] dataToWrite) throws IOException {
     return writeAndRead(socket, dataToWrite, 0, dataToWrite.length);
   }
 
-  /**
-   * Writes <code>length</code> bytes from the passed byte array starting at
-   * <code>offset</code> to the socket and returns a single- or multi-line
-   * response from the socket as a byte array based on the response code
-   * received from the socket. If the response code is known to return a
-   * multi-line response, a multi-line response is returned. All other responses
-   * are returned as a single-line response. Officially supports all response
-   * codes defined in RFC 3977 and RFC 2980.
-   *
-   * @param  socket      the socket with an active connection to an NNTP server
-   * @param  dataToWrite the data to write as bytes
-   * @param  offset      start offset into the data to write
-   * @param  length      the number of bytes to write
-   * @return             the response from the server as bytes
-   */
   public static byte[] writeAndRead(final Socket socket, final byte[] dataToWrite, final int offset, final int length) throws IOException {
     return writeAndRead(socket, dataToWrite, offset, length, defaultMultiLineResponseCodes);
   }
 
-  /**
-   * Returns a single-line response from the socket as a byte array.
-   *
-   * @param  socket the socket with an active connection to an NNTP server
-   * @return        the response from the server as bytes
-   */
   public static byte[] readSingleLine(final Socket socket) throws IOException {
     return readSingleLine(socket, new ByteArrayOutputStream());
   }
 
-  /**
-   * Returns a multi-line response from the socket as a byte array.
-   *
-   * @param  socket the socket with an active connection to an NNTP server
-   * @return        the response from the server as bytes
-   */
   public static byte[] readMultiLine(final Socket socket) throws IOException {
     return readMultiLine(socket, new ByteArrayOutputStream());
   }
 
-  /**
-   * Writes data to the socket.
-   *
-   * @param socket      the socket with an active connection to an NNTP server
-   * @param dataToWrite the data to write as bytes
-   */
   public static void write(final Socket socket, final byte[] dataToWrite) throws IOException {
     write(socket, dataToWrite, 0, dataToWrite.length);
   }
 
-  /**
-   * Writes <code>length</code> bytes from the passed byte array starting at
-   * <code>offset</code> to the socket.
-   *
-   * @param socket      the socket with an active connection to an NNTP server
-   * @param dataToWrite the data to write as bytes
-   * @param offset      start offset into the data to write
-   * @param length      the number of bytes to write
-   */
   public static void write(final Socket socket, final byte[] dataToWrite, final int offset, final int length) throws IOException {
     socket.getOutputStream().write(dataToWrite, offset, length);
   }
 
   private NNTPClient() {}
 
-  /**
-   * Unmodifiable set of strings of the default multi-line response codes.
-   */
   public static final Set<String> defaultMultiLineResponseCodes;
   static {
     final Set<String> s = new HashSet<>(10, 1.0f);
