@@ -1,38 +1,27 @@
 package com.fearnoeval.nntp;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import java.io.IOException;
+
 public final class NNTPClient {
 
-  public static byte[] writeAndRead(final Socket socket, final byte[] dataToWrite) throws IOException {
-    return writeAndRead(socket, dataToWrite, 0, dataToWrite.length);
+  public static byte[] writeAndRead(final OutputStream outputStream, final InputStream inputStream, final byte[] dataToWrite) throws IOException {
+    return writeAndRead(outputStream, inputStream, dataToWrite, defaultMultiLineResponseCodes);
   }
 
-  public static byte[] writeAndRead(final Socket socket, final byte[] dataToWrite, final int offset, final int length) throws IOException {
-    return writeAndRead(socket, dataToWrite, offset, length, defaultMultiLineResponseCodes);
+  public static byte[] readSingleLine(final InputStream inputStream) throws IOException {
+    return readSingleLine(inputStream, new ByteArrayOutputStream());
   }
 
-  public static byte[] readSingleLine(final Socket socket) throws IOException {
-    return readSingleLine(socket, new ByteArrayOutputStream());
-  }
-
-  public static byte[] readMultiLine(final Socket socket) throws IOException {
-    return readMultiLine(socket, new ByteArrayOutputStream());
-  }
-
-  public static void write(final Socket socket, final byte[] dataToWrite) throws IOException {
-    write(socket, dataToWrite, 0, dataToWrite.length);
-  }
-
-  public static void write(final Socket socket, final byte[] dataToWrite, final int offset, final int length) throws IOException {
-    socket.getOutputStream().write(dataToWrite, offset, length);
+  public static byte[] readMultiLine(final InputStream inputStream) throws IOException {
+    return readMultiLine(inputStream, new ByteArrayOutputStream());
   }
 
   private NNTPClient() {}
@@ -53,20 +42,21 @@ public final class NNTPClient {
     defaultMultiLineResponseCodes = Collections.unmodifiableSet(s);
   }
 
-  private static byte[] writeAndRead(final Socket socket, final byte[] dataToWrite, final int offset, final int length, final Set<String> multiLineResponseCodes) throws IOException {
-    write(socket, dataToWrite, offset, length);
+  private static byte[] writeAndRead(final OutputStream outputStream, final InputStream inputStream, final byte[] dataToWrite, final Set<String> multiLineResponseCodes) throws IOException {
+    outputStream.write(dataToWrite);
+    outputStream.flush();
 
     final byte[] responseCode = new byte[3];
-    socket.getInputStream().read(responseCode);
+    inputStream.read(responseCode);
     final String responseCodeString = new String(responseCode, StandardCharsets.UTF_8);
 
     if (responseCodeString.equals(_211)) {
-      return read211(socket, dataToWrite);
+      return read211(inputStream, dataToWrite);
     }
     if (multiLineResponseCodes.contains(responseCodeString)) {
-      return readMultiLine(socket, responseCode);
+      return readMultiLine(inputStream, responseCode);
     }
-    return readSingleLine(socket, responseCode);
+    return readSingleLine(inputStream, responseCode);
   }
 
   private static final String _211      = "211";
@@ -77,23 +67,21 @@ public final class NNTPClient {
     return (maybeCommand.length >= listgroup.length()) && new String(maybeCommand, 0, listgroup.length(), StandardCharsets.UTF_8).toUpperCase().equals(listgroup);
   }
 
-  private static byte[] read211(final Socket socket, final byte[] maybeCommand) throws IOException {
-    return (isListgroup(maybeCommand)) ? readMultiLine(socket, _211Array) : readSingleLine(socket, _211Array);
+  private static byte[] read211(final InputStream inputStream, final byte[] maybeCommand) throws IOException {
+    return (isListgroup(maybeCommand)) ? readMultiLine(inputStream, _211Array) : readSingleLine(inputStream, _211Array);
   }
 
-  private static final int cr  = '\r';
-  private static final int lf  = '\n';
-  private static final int dot = '.';
+  private static final int cr  = 13;
+  private static final int lf  = 10;
+  private static final int dot = 46;
 
-  private static byte[] readSingleLine(final Socket socket, final byte[] responseCode) throws IOException {
+  private static byte[] readSingleLine(final InputStream inputStream, final byte[] responseCode) throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     baos.write(responseCode);
-    return readSingleLine(socket, baos);
+    return readSingleLine(inputStream, baos);
   }
 
-  private static byte[] readSingleLine(final Socket socket, final ByteArrayOutputStream baos) throws IOException {
-    final InputStream is = socket.getInputStream();
-
+  private static byte[] readSingleLine(final InputStream is, final ByteArrayOutputStream baos) throws IOException {
     int b;
 
     for (;;) {
@@ -109,15 +97,13 @@ public final class NNTPClient {
     }
   }
 
-  private static byte[] readMultiLine(final Socket socket, final byte[] responseCode) throws IOException {
+  private static byte[] readMultiLine(final InputStream inputStream, final byte[] responseCode) throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     baos.write(responseCode);
-    return readMultiLine(socket, baos);
+    return readMultiLine(inputStream, baos);
   }
 
-  private static byte[] readMultiLine(final Socket socket, final ByteArrayOutputStream baos) throws IOException {
-    final InputStream is = socket.getInputStream();
-
+  private static byte[] readMultiLine(final InputStream is, final ByteArrayOutputStream baos) throws IOException {
     int b;
 
     for (;;) {
