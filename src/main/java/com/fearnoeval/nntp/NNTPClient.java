@@ -77,30 +77,10 @@ public final class NNTPClient {
     return (isListgroup(maybeCommand)) ? readMultiLine(inputStream, _211Array) : readSingleLine(inputStream, _211Array);
   }
 
-  private static final int cr  = 13;
-  private static final int lf  = 10;
-  private static final int dot = 46;
-
   private static byte[] readSingleLine(final InputStream inputStream, final byte[] statusCode) throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     baos.write(statusCode);
     return readSingleLine(inputStream, baos);
-  }
-
-  private static byte[] readSingleLine(final InputStream is, final ByteArrayOutputStream baos) throws IOException {
-    int b;
-
-    for (;;) {
-      b = is.read();
-      baos.write(b);
-      if (b == cr) {
-        b = is.read();
-        baos.write(b);
-        if (b == lf) {
-          return baos.toByteArray();
-        }
-      }
-    }
   }
 
   private static byte[] readMultiLine(final InputStream inputStream, final byte[] statusCode) throws IOException {
@@ -109,31 +89,27 @@ public final class NNTPClient {
     return readMultiLine(inputStream, baos);
   }
 
-  private static byte[] readMultiLine(final InputStream is, final ByteArrayOutputStream baos) throws IOException {
-    int b;
+  private static final int cr  = 13;
+  private static final int lf  = 10;
+  private static final int dot = 46;
 
-    for (;;) {
+  private static final int[] singleLineEnding = new int[] {cr, lf};
+  private static final int[] multiLineEnding  = new int[] {cr, lf, dot, cr, lf};
+
+  private static byte[] readSingleLine(final InputStream is, final ByteArrayOutputStream baos) throws IOException {
+    return readUntil(is, baos, singleLineEnding);
+  }
+
+  private static byte[] readMultiLine(final InputStream is, final ByteArrayOutputStream baos) throws IOException {
+    return readUntil(is, baos, multiLineEnding);
+  }
+
+  private static byte[] readUntil(final InputStream is, final ByteArrayOutputStream baos, final int[] a) throws IOException {
+    for (int i = 0, b; i < a.length; i = (b == a[i]) ? i + 1 : 0) {
       b = is.read();
+      if (b == -1) { throw new EOFException(); }
       baos.write(b);
-      if (b == cr) {
-        b = is.read();
-        baos.write(b);
-        if (b == lf) {
-          b = is.read();
-          baos.write(b);
-          if (b == dot) {
-            b = is.read();
-            baos.write(b);
-            if (b == cr) {
-              b = is.read();
-              baos.write(b);
-              if (b == lf) {
-                return baos.toByteArray();
-              }
-            }
-          }
-        }
-      }
     }
+    return baos.toByteArray();
   }
 }
