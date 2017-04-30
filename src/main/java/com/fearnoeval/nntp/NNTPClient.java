@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import java.io.EOFException;
 import java.io.IOException;
 
 public final class NNTPClient {
@@ -47,16 +48,21 @@ public final class NNTPClient {
     outputStream.flush();
 
     final byte[] responseCode = new byte[3];
-    inputStream.read(responseCode);
-    final String responseCodeString = new String(responseCode, StandardCharsets.UTF_8);
+    final int    bytesRead    = inputStream.read(responseCode);
 
-    if (responseCodeString.equals(_211)) {
-      return read211(inputStream, dataToWrite);
+    if (bytesRead == 3) {
+      final String responseCodeString = new String(responseCode, StandardCharsets.UTF_8);
+
+      if (responseCodeString.equals(_211)) {
+        return read211(inputStream, dataToWrite);
+      }
+      if (multiLineResponseCodes.contains(responseCodeString)) {
+        return readMultiLine(inputStream, responseCode);
+      }
+      return readSingleLine(inputStream, responseCode);
     }
-    if (multiLineResponseCodes.contains(responseCodeString)) {
-      return readMultiLine(inputStream, responseCode);
-    }
-    return readSingleLine(inputStream, responseCode);
+
+    throw new EOFException();
   }
 
   private static final String _211      = "211";
