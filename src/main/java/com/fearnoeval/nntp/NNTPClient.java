@@ -47,19 +47,19 @@ public final class NNTPClient {
     outputStream.write(dataToWrite);
     outputStream.flush();
 
-    final byte[] responseCode = new byte[3];
-    final int    bytesRead    = inputStream.read(responseCode);
+    final byte[] statusCode = new byte[3];
+    final int    bytesRead  = inputStream.read(statusCode);
 
     if (bytesRead == 3) {
-      final String responseCodeString = new String(responseCode, StandardCharsets.UTF_8);
+      final String statusCodeString = new String(statusCode, StandardCharsets.UTF_8);
 
-      if (responseCodeString.equals(_211)) {
+      if (statusCodeString.equals(_211)) {
         return read211(inputStream, dataToWrite);
       }
-      if (multiLineResponseCodes.contains(responseCodeString)) {
-        return readMultiLine(inputStream, responseCode);
+      if (multiLineResponseCodes.contains(statusCodeString)) {
+        return readMultiLine(inputStream, statusCode);
       }
-      return readSingleLine(inputStream, responseCode);
+      return readSingleLine(inputStream, statusCode);
     }
 
     throw new EOFException();
@@ -81,9 +81,9 @@ public final class NNTPClient {
   private static final int lf  = 10;
   private static final int dot = 46;
 
-  private static byte[] readSingleLine(final InputStream inputStream, final byte[] responseCode) throws IOException {
+  private static byte[] readSingleLine(final InputStream inputStream, final byte[] statusCode) throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    baos.write(responseCode);
+    baos.write(statusCode);
     return readSingleLine(inputStream, baos);
   }
 
@@ -103,9 +103,9 @@ public final class NNTPClient {
     }
   }
 
-  private static byte[] readMultiLine(final InputStream inputStream, final byte[] responseCode) throws IOException {
+  private static byte[] readMultiLine(final InputStream inputStream, final byte[] statusCode) throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    baos.write(responseCode);
+    baos.write(statusCode);
     return readMultiLine(inputStream, baos);
   }
 
