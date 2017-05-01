@@ -10,6 +10,7 @@ import java.util.Set;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.lang.NumberFormatException;
 
 public final class NNTPClient {
 
@@ -27,54 +28,55 @@ public final class NNTPClient {
 
   private NNTPClient() {}
 
-  public static final Set<String> defaultMultiLineResponseCodes;
+  public static final Set<Integer> defaultMultiLineResponseCodes;
   static {
-    final Set<String> s = new HashSet<>(10, 1.0f);
-    s.add("100");
-    s.add("101");
-    s.add("215");
-    s.add("220");
-    s.add("221");
-    s.add("222");
-    s.add("224");
-    s.add("225");
-    s.add("230");
-    s.add("231");
+    final Set<Integer> s = new HashSet<>(10, 1.0f);
+    s.add(100);
+    s.add(101);
+    s.add(215);
+    s.add(220);
+    s.add(221);
+    s.add(222);
+    s.add(224);
+    s.add(225);
+    s.add(230);
+    s.add(231);
     defaultMultiLineResponseCodes = Collections.unmodifiableSet(s);
   }
 
-  private static byte[] writeAndRead(final OutputStream outputStream, final InputStream inputStream, final byte[] dataToWrite, final Set<String> multiLineResponseCodes) throws IOException {
+  private static byte[] writeAndRead(final OutputStream outputStream, final InputStream inputStream, final byte[] dataToWrite, final Set<Integer> multiLineResponseCodes) throws IOException {
     outputStream.write(dataToWrite);
     outputStream.flush();
 
-    final byte[] statusCode = new byte[3];
-    final int    bytesRead  = inputStream.read(statusCode);
+    final byte[] statusCodeBytes = new byte[3];
+    final int    bytesRead       = inputStream.read(statusCodeBytes);
 
     if (bytesRead == 3) {
-      final String statusCodeString = new String(statusCode, StandardCharsets.UTF_8);
+      try {
+        final int statusCodeInt = Integer.parseInt(new String(statusCodeBytes, StandardCharsets.UTF_8));
 
-      if (statusCodeString.equals(_211)) {
-        return read211(inputStream, dataToWrite);
+        if (statusCodeInt == 211) {
+          return read211(inputStream, statusCodeBytes, dataToWrite);
+        }
+        if (multiLineResponseCodes.contains(statusCodeInt)) {
+          return readMultiLine(inputStream, statusCodeBytes);
+        }
+        return readSingleLine(inputStream, statusCodeBytes);
       }
-      if (multiLineResponseCodes.contains(statusCodeString)) {
-        return readMultiLine(inputStream, statusCode);
-      }
-      return readSingleLine(inputStream, statusCode);
+      catch (NumberFormatException e) { throw new RuntimeException("Invalid response", e); }
     }
 
     throw new EOFException();
   }
 
-  private static final String _211      = "211";
-  private static final byte[] _211Array = _211.getBytes(StandardCharsets.UTF_8);
   private static final String listgroup = "LISTGROUP";
 
   private static boolean isListgroup(final byte[] maybeCommand) {
     return (maybeCommand.length >= listgroup.length()) && new String(maybeCommand, 0, listgroup.length(), StandardCharsets.UTF_8).toUpperCase().equals(listgroup);
   }
 
-  private static byte[] read211(final InputStream inputStream, final byte[] maybeCommand) throws IOException {
-    return (isListgroup(maybeCommand)) ? readMultiLine(inputStream, _211Array) : readSingleLine(inputStream, _211Array);
+  private static byte[] read211(final InputStream inputStream, final byte[] statusCode, final byte[] maybeCommand) throws IOException {
+    return isListgroup(maybeCommand) ? readMultiLine(inputStream, statusCode) : readSingleLine(inputStream, statusCode);
   }
 
   private static byte[] readSingleLine(final InputStream inputStream, final byte[] statusCode) throws IOException {
