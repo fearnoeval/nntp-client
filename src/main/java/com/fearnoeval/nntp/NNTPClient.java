@@ -91,12 +91,12 @@ public final class NNTPClient {
     return readMultiLine(inputStream, baos);
   }
 
-  private static final int cr  = 13;
-  private static final int lf  = 10;
-  private static final int dot = 46;
+  private static final byte cr  = 13;
+  private static final byte lf  = 10;
+  private static final byte dot = 46;
 
-  private static final int[] singleLineEnding = new int[] {cr, lf};
-  private static final int[] multiLineEnding  = new int[] {cr, lf, dot, cr, lf};
+  private static final byte[] singleLineEnding = new byte[] {cr, lf};
+  private static final byte[] multiLineEnding  = new byte[] {cr, lf, dot, cr, lf};
 
   private static byte[] readSingleLine(final InputStream is, final ByteArrayOutputStream baos) throws IOException {
     return readUntil(is, baos, singleLineEnding);
@@ -106,11 +106,21 @@ public final class NNTPClient {
     return readUntil(is, baos, multiLineEnding);
   }
 
-  private static byte[] readUntil(final InputStream is, final ByteArrayOutputStream baos, final int[] a) throws IOException {
-    for (int i = 0, b; i < a.length; i = (b == a[i]) ? i + 1 : 0) {
+  private static byte[] readUntil(final InputStream is, final ByteArrayOutputStream baos, final byte[] a) throws IOException {
+    for (int i = 0, b; i < a.length;) {
       b = is.read();
-      if (b == -1) { throw new EOFException(); }
-      baos.write(b);
+
+      if (b == -1) {
+        throw new EOFException();
+      }
+      if (b == a[i]) {
+        ++i;
+      }
+      else {
+        baos.write(a, 0, i);
+        i = 0;
+        baos.write(b);
+      }
     }
     return baos.toByteArray();
   }
